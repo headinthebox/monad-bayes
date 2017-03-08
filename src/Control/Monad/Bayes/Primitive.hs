@@ -99,6 +99,7 @@ normalPdf mu sigma x
 -- | PDF of gamma distribution parameterized by shape and rate.
 gammaPdf :: (Ord a, Floating a, NumSpec a) => a -> a -> a -> LogDomain a
 gammaPdf a b x
+  | a <= 0 || b <= 0 = error "Negative parameter to Gamma"
   | x > 0     = fromLog $ a * log b + (a-1) * log x - b * x - logGamma a
   | otherwise = 0
 
