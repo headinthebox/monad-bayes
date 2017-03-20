@@ -37,11 +37,11 @@ toWeighted (Validation m) = m
 fromWeighted :: Weighted m a -> Validation m a
 fromWeighted = Validation
 
-runValidation :: Validation m a -> m (a, LogDomain (CustomReal m))
+runValidation :: MonadDist m => Validation m a -> m (a, LogDomain (CustomReal m))
 runValidation = runWeighted . toWeighted
 
-withValidation :: m (a, LogDomain (CustomReal m)) -> Validation m a
-withValidation = fromWeighted . withValidation
+withValidation :: MonadDist m => m (a, LogDomain (CustomReal m)) -> Validation m a
+withValidation = fromWeighted . withWeight
 
 instance HasCustomReal m => HasCustomReal (Validation m) where
   type CustomReal (Validation m) = CustomReal m
