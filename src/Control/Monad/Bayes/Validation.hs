@@ -13,6 +13,8 @@ module Control.Monad.Bayes.Validation (
     Validation,
     toWeighted,
     fromWeighted,
+    runValidation,
+    withValidation,
     hoist,
     validationScore,
     validate
@@ -26,14 +28,20 @@ import Control.Monad.Bayes.Simple
 import Control.Monad.Bayes.Weighted hiding (hoist)
 import qualified Control.Monad.Bayes.Weighted as W
 
-newtype Validation m a = Validation {runValidation :: Weighted m a}
+newtype Validation m a = Validation (Weighted m a)
   deriving(Functor, Applicative, Monad, MonadIO, MonadTrans)
 
 toWeighted :: Validation m a -> Weighted m a
-toWeighted = runValidation
+toWeighted (Validation m) = m
 
 fromWeighted :: Weighted m a -> Validation m a
 fromWeighted = Validation
+
+runValidation :: Validation m a -> m (a, LogDomain (CustomReal m))
+runValidation = runWeighted . toWeighted
+
+withValidation :: m (a, LogDomain (CustomReal m)) -> Validation m a
+withValidation = fromWeighted . withValidation
 
 instance HasCustomReal m => HasCustomReal (Validation m) where
   type CustomReal (Validation m) = CustomReal m
