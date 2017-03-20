@@ -11,24 +11,37 @@ Portability : GHC
 
 module Control.Monad.Bayes.Validation (
     Validation,
+    toWeighted,
+    fromWeighted,
     runValidation,
+    withValidation,
     hoist,
     validationScore,
     validate
                 ) where
 
 import Control.Monad.Trans
-import Control.Monad.Trans.State
 
 import Control.Monad.Bayes.LogDomain
 import Control.Monad.Bayes.Class
 import Control.Monad.Bayes.Simple
+import Control.Monad.Bayes.Weighted hiding (hoist)
+import qualified Control.Monad.Bayes.Weighted as W
 
-newtype Validation m a = Validation {runValidation :: StateT (LogDomain (CustomReal m)) m a}
-  deriving(Functor, Applicative, Monad, MonadIO)
+newtype Validation m a = Validation (Weighted m a)
+  deriving(Functor, Applicative, Monad, MonadIO, MonadTrans)
 
-instance MonadTrans Validation where
-  lift = Validation . lift
+toWeighted :: Validation m a -> Weighted m a
+toWeighted (Validation m) = m
+
+fromWeighted :: Weighted m a -> Validation m a
+fromWeighted = Validation
+
+runValidation :: Validation m a -> m (a, LogDomain (CustomReal m))
+runValidation = runWeighted . toWeighted
+
+withValidation :: m (a, LogDomain (CustomReal m)) -> Validation m a
+withValidation = fromWeighted . withValidation
 
 instance HasCustomReal m => HasCustomReal (Validation m) where
   type CustomReal (Validation m) = CustomReal m
@@ -42,12 +55,12 @@ instance (Conditionable m, Monad m) => Conditionable (Validation m) where
 instance MonadDist m => MonadDist (Validation m)
 instance MonadBayes m => MonadBayes (Validation m)
 
-hoist :: (CustomReal m ~ CustomReal n) => (forall x. m x -> n x)
-      -> Validation m a -> Validation n a
-hoist f (Validation m) = Validation (mapStateT f m)
+hoist :: (forall x. m x -> m x)
+      -> Validation m a -> Validation m a
+hoist f (Validation m) = Validation (W.hoist f m)
 
 validationScore :: (HasCustomReal m, Monad m) => LogDomain (CustomReal m) -> Validation m ()
-validationScore w = Validation $ modify (* w)
+validationScore w = Validation $ factor w
 
-validate :: (HasCustomReal m, Monad m) => Validation m a -> m (LogDomain (CustomReal m))
-validate (Validation m) = execStateT m 1
+validate :: (HasCustomReal m, MonadDist m) => Validation m a -> m (LogDomain (CustomReal m))
+validate (Validation m) = fmap snd $ runWeighted m
