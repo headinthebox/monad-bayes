@@ -29,7 +29,6 @@ library
                        Control.Monad.Bayes.Trace,
                        Control.Monad.Bayes.Conditional,
                        Control.Monad.Bayes.Augmented,
-                       Control.Monad.Bayes.Validation,
                        Control.Monad.Bayes.Distribution,
                        Control.Monad.Bayes.Distribution.MVNormal,
                        Control.Monad.Bayes.Simple,
