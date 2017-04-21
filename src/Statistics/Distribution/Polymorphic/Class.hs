@@ -22,14 +22,17 @@ module Statistics.Distribution.Polymorphic.Class (
   param,
   distFromParam,
   Density,
-  pdf
+  pdf,
+  Support(RealLine,LowerBounded,UpperBounded,Interval),
+  KnownSupport,
+  support
 ) where
 
 import Numeric.LogDomain
 
 -- | Distribution type class.
 -- It does not specify any functions, only types.
-class Distribution d where
+class (Floating (RealNum d), Ord (RealNum d)) => Distribution d where
   -- | The type corresponding to a set on which the distribution is defined.
   type Domain d
   -- | The custom real number type used by a distribution.
@@ -51,3 +54,16 @@ class Distribution d => Density d where
   -- For distributions over real numbers this is density w.r.t. the Lebesgue measure,
   -- for distributions over integers this is density w.r.t. the counting measure, aka the probability mass function.
   pdf :: d -> Domain d -> LogDomain (RealNum d)
+
+-- | Data type representing support of univariate continuous distributions.
+-- We only consider single intervals, which can extend to infinity on either end.
+-- There is no distinction between open and closed intervals.
+data Support r = RealLine
+               | LowerBounded r
+               | UpperBounded r
+               | Interval r r
+
+-- | Distributions with known support expressible as 'Support'.
+class (Distribution d, Domain d ~ RealNum d) => KnownSupport d where
+  -- | Support of the distribution.
+  support :: d -> Support (Domain d)

@@ -55,9 +55,12 @@ normalPdf mu sigma x
                   where
                     sq y = y ^ (2 :: Int)
 
-instance Distribution (Normal r) where
+instance (Ord r, Floating r) => Distribution (Normal r) where
   type Domain (Normal r) = r
   type RealNum (Normal r) = r
+
+instance (Ord r, Floating r) => KnownSupport (Normal r) where
+  support _ = RealLine
 
 instance (Ord r, Floating r) => Parametric (Normal r) where
   type Param (Normal r) = (r,r)

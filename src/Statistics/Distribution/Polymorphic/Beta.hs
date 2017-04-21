@@ -45,9 +45,12 @@ betaPdf a b x
    | x >= 1 = 0
    | otherwise = fromLog $ (a-1) * log x + (b-1) * log (1-x) - logBeta a b
 
-instance Distribution (Beta r) where
+instance (Ord r, Floating r) => Distribution (Beta r) where
   type Domain (Beta r) = r
   type RealNum (Beta r) = r
+
+instance (Ord r, Floating r) => KnownSupport (Beta r) where
+  support _ = Interval 0 1
 
 instance (Ord r, Floating r) => Parametric (Beta r) where
   type Param (Beta r) = (r,r)
